@@ -14,3 +14,7 @@ _demo:
 _random:
     path:     /random/{limit}
     defaults: { _controller: AcmeDemoBundle:Random:index }
+
+_task:
+    path:     /task
+    defaults: { _controller: AcmeDemoBundle:Task:new}
