@@ -9,35 +9,43 @@
 namespace Acme\DemoBundle\Controller;
 
 
+use Acme\DemoBundle\Entity\Tag;
 use Acme\DemoBundle\Entity\Task;
+use Acme\DemoBundle\Form\TaskType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class TaskController extends  Controller {
     public function newAction(Request $request)
     {
-        // create a task and give it some dummy data for this example
         $task = new Task();
-        $task->setTask('Write a blog post');
+//        $task->setTask('Write a blog post');
         $task->setDueDate(new \DateTime('tomorrow'));
+        $tag1 = new Tag();
+        $tag1->name = 'tag1';
+        $task->getTags()->add($tag1);
+        $tag2 = new Tag();
+        $tag2->name = 'tag2';
+        $task->getTags()->add($tag2);
 
-        $form = $this->createFormBuilder($task)
-            ->add('task', 'text')
-            ->add('dueDate', 'date')
-            ->add('save', 'submit', array('label' => 'Create Task'))
-            ->add('saveAndAdd', 'submit', array('label' => 'Save and Add'))
-            ->getForm();
+        $form = $this->createForm(new TaskType(),$task);
+        $form ->add('save', 'submit', array('label' => 'Create Task'));
+
+        $form->handleRequest($request);
+
         if ($form->isValid()) {
-            // ... perform some action, such as saving the task to the database
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($task);
+            $em->flush();
 
-            $nextAction = $form->get('saveAndAdd')->isClicked()
-                ? 'task_new'
-                : 'task_success';
+            $session = $this->getRequest()->getSession();
+            $session->getFlashBag()->add('message', 'Task saved!');
 
-            return $this->redirectToRoute($nextAction);
+            return new RedirectResponse($this->generateUrl('_demo'));
         }
 
-        return $this->render('default/new.html.twig', array(
+        return $this->render('AcmeDemoBundle:Task:task.html.twig', array(
             'form' => $form->createView(),
         ));
     }
